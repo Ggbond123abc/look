@@ -1,0 +1,40 @@
+name: LookTime
+options:
+  bundleIdPrefix: com.ggbond
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    DEVELOPMENT_TEAM: ""
+targets:
+  LookTime:
+    type: application
+    platform: iOS
+    sources: [LookTime]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ggbond.looktime
+        INFOPLIST_FILE: LookTime/Info.plist
+        CODE_SIGN_ENTITLEMENTS: LookTime/LookTime.entitlements
+    dependencies:
+      - target: LookTimeReport
+    scheme:
+      testTargets: [LookTimeTests]
+  LookTimeReport:
+    type: app-extension
+    platform: iOS
+    sources: [LookTimeReport]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ggbond.looktime.report
+        INFOPLIST_FILE: LookTimeReport/Info.plist
+        CODE_SIGN_ENTITLEMENTS: LookTimeReport/LookTimeReport.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+  LookTimeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [LookTimeTests]
+    dependencies:
+      - target: LookTime
+
