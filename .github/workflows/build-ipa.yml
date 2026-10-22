@@ -1,0 +1,62 @@
+name: Build iPhone IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+
+    steps:
+      - name: Download source
+        uses: actions/checkout@v4
+
+      - name: Find project folder
+        id: project
+        shell: bash
+        run: |
+          if [ -f "LookTime-iOS-source/project.yml" ]; then
+            echo "dir=LookTime-iOS-source" >> "$GITHUB_OUTPUT"
+          elif [ -f "project.yml" ]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+          else
+            echo "Cannot find project.yml"
+            exit 1
+          fi
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: xcodegen generate
+
+      - name: Build unsigned iPhone app
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: |
+          xcodebuild \
+            -project LookTime.xcodeproj \
+            -scheme LookTime \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM="" \
+            clean build
+
+      - name: Package IPA
+        working-directory: ${{ steps.project.outputs.dir }}
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/LookTime.app Payload/
+          zip -qry LookTime-unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: LookTime-IPA
+          path: ${{ steps.project.outputs.dir }}/LookTime-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
